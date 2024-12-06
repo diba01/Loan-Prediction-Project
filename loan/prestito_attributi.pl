@@ -2,7 +2,6 @@
 a(gender, [male, female, nil]). % Genere del richiedente (Male, Female, NIL)
 a(married, [yes, no, nil]).     % Stato civile (Yes, No, NIL)
 a(dependents, [0, 1, 2, 3, nil]). % Numero di dipendenti a carico (0, 1, 2, 3, NIL)
-a(education, [graduate, not_graduate]). % Livello di istruzione (Graduate, Not Graduate, NIL)
 a(self_employed, [yes, no, nil]). % Lavoratore autonomo (Yes, No, NIL)
 a(applicantincome, [low, medium_low, medium_high, high, very_high]). % Reddito richiedente
 a(coapplicantincome, [null, low, medium_low, medium_high, high]). % Reddito co-richiedente
