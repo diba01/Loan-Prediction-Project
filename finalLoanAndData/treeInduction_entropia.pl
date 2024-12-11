@@ -47,41 +47,53 @@ sceglie_attributo( Attributi, Esempi, MigliorAttributo )  :-
 	      (member(A,Attributi) , disuguaglianza(Esempi,A,Disuguaglianza)),
 	      [_/MigliorAttributo|_] ).
 
+% disuguaglianza(+Esempi, +Attributo, -InfoGain)
+% InfoGain rappresenta il guadagno informativo calcolato per il dato Attributo.
+% Si calcola come la differenza tra l'entropia iniziale del dataset e l'entropia
+% pesata dei sottoinsiemi creati dividendo il dataset in base ai valori dell'Attributo.
 disuguaglianza(Esempi, Attributo, InfoGain) :-
-    entropia(Esempi, EntropiaIniziale),
-    a(Attributo, AttVals),
-    somma_pesata(Esempi, Attributo, AttVals, 0, EntropiaPesata),
-    InfoGain is EntropiaIniziale - EntropiaPesata.
+    entropia(Esempi, EntropiaIniziale),           % Calcola l'entropia iniziale del dataset.
+    a(Attributo, AttVals),                        % Ottiene i possibili valori dell'Attributo.
+    somma_pesata(Esempi, Attributo, AttVals, 0, EntropiaPesata), % Calcola l'entropia pesata.
+    InfoGain is EntropiaIniziale - EntropiaPesata. % Guadagno informativo = entropia iniziale - pesata.
 
-somma_pesata(_, _, [], Somma, Somma).
+% somma_pesata(+Esempi, +Attributo, +AttVals, +SommaParziale, -Somma)
+% Calcola la somma pesata dell'entropia per i sottoinsiemi degli esempi partizionati
+% in base ai valori dell'Attributo.
+somma_pesata(_, _, [], Somma, Somma).             % Caso base: nessun valore, restituisce la somma accumulata.
 somma_pesata(Esempi, Att, [Val | Valori], SommaParziale, Somma) :-
-    length(Esempi, N),
-    findall(e(C, O),
+    length(Esempi, N),                            % Numero totale di esempi.
+    findall(e(C, O),                              % Filtra gli esempi che soddisfano la condizione Att=Val.
             (member(e(C, O), Esempi), soddisfa(O, [Att = Val])),
             EsempiSoddisfatti),
-    length(EsempiSoddisfatti, NVal),
-    NVal > 0, !,
-    entropia(EsempiSoddisfatti, EntropiaSubset),
-    NuovaSommaParziale is SommaParziale + (NVal / N) * EntropiaSubset,
-    somma_pesata(Esempi, Att, Valori, NuovaSommaParziale, Somma)
+    length(EsempiSoddisfatti, NVal),              % Conta gli esempi che soddisfano Att=Val.
+    NVal > 0, !,                                  % Procede solo se almeno un esempio soddisfa.
+    entropia(EsempiSoddisfatti, EntropiaSubset),  % Calcola l'entropia del sottoinsieme.
+    NuovaSommaParziale is SommaParziale + (NVal / N) * EntropiaSubset, % Aggiunge la parte pesata.
+    somma_pesata(Esempi, Att, Valori, NuovaSommaParziale, Somma)       % Continua con i valori rimanenti.
     ;
-    somma_pesata(Esempi, Att, Valori, SommaParziale, Somma).
+    somma_pesata(Esempi, Att, Valori, SommaParziale, Somma). % Caso in cui nessun esempio soddisfa Att=Val.
 
-
+% entropia(+Esempi, -Entropia)
+% Calcola l'entropia di un insieme di esempi.
+% Entropia = -SUM(Pi * log2(Pi)) per ogni classe i presente nel dataset.
 entropia(Esempi, Entropia) :-
-    length(Esempi, N),
-    findall(P,
-            (bagof(1, member(e(_, _), Esempi), L),
+    length(Esempi, N),                            % Numero totale di esempi.
+    findall(P,                                    % Calcola le probabilità delle classi.
+            (bagof(1, member(e(Classe, _), Esempi), L),
              length(L, NC),
              P is NC / N),
             Probabilità),
-    entropia_da_probabilità(Probabilità, Entropia).
+    entropia_da_probabilità(Probabilità, Entropia). % Calcola l'entropia data la lista delle probabilità.
 
-entropia_da_probabilità([], 0).
+% entropia_da_probabilità(+ListaProbabilità, -Entropia)
+% Calcola l'entropia data una lista di probabilità.
+entropia_da_probabilità([], 0).                  % Caso base: nessuna probabilità, entropia nulla.
 entropia_da_probabilità([P | Ps], Entropia) :-
-    entropia_da_probabilità(Ps, EntropiaParziale),
-    (P =:= 0 -> Entropia is EntropiaParziale
-    ; Entropia is EntropiaParziale - P * log(P) / log(2)).
+    entropia_da_probabilità(Ps, EntropiaParziale), % Calcola ricorsivamente l'entropia per il resto.
+    (P =:= 0 -> Entropia is EntropiaParziale      % Ignora le probabilità nulle.
+    ; Entropia is EntropiaParziale - P * log(P) / log(2)). % Applica la formula -P * log2(P).
+
 
 
 % induce_alberi(Attributi, Valori, AttRimasti, Esempi, SAlberi):
